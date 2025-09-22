@@ -11,6 +11,38 @@
             min-height: 100vh;
             padding: 20px;
         }
+
+        .back-btn {
+            position: fixed;
+            top: 30px;
+            left: 30px;
+            background: #131922;
+            color: white;
+            border: none;
+            padding: 15px;
+            border-radius: 50%;
+            font-size: 18px;
+            cursor: pointer;
+            box-shadow: 0 4px 15px #113145;
+            transition: transform 0.2s ease;
+            z-index: 1000;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 50px;
+            height: 50px;
+        }
+
+        .back-btn:hover {
+            transform: scale(1.1);
+        }
+        
+        @media print {
+            .back-btn {
+                display: none;
+            }
+        }
         
         .resume-container {
             max-width: 800px;

@@ -77,40 +77,8 @@ function generateContactItem($icon, $text) {
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Istok+Web:ital,wght@0,400;0,700;1,400;1,700&display=swap" rel="stylesheet">
     <link rel='stylesheet' href='https://cdn-uicons.flaticon.com/3.0.0/uicons-solid-rounded/css/uicons-solid-rounded.css'>
-    <link rel="stylesheet" href="stylesheet.css">
-    <style>
-        .back-btn {
-            position: fixed;
-            top: 30px;
-            left: 30px;
-            background: #131922;
-            color: white;
-            border: none;
-            padding: 15px;
-            border-radius: 50%;
-            font-size: 18px;
-            cursor: pointer;
-            box-shadow: 0 4px 15px #113145;
-            transition: transform 0.2s ease;
-            z-index: 1000;
-            text-decoration: none;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            width: 50px;
-            height: 50px;
-        }
-        
-        .back-btn:hover {
-            transform: scale(1.1);
-        }
-        
-        @media print {
-            .back-btn {
-                display: none;
-            }
-        }
-    </style>
+    <link rel="stylesheet" href="styles\resume.css">
+    
 </head>
 <body>
     <?php if ($auth->isAdmin() && $viewUserId): ?>
