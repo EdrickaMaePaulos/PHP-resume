@@ -2,25 +2,23 @@
 require_once 'db.php';
 require_once 'auth.php';
 
-// Check if viewing specific user's resume (for admin) or current user's resume
 $viewUserId = isset($_GET['user_id']) ? (int)$_GET['user_id'] : null;
 
 if ($viewUserId && $auth->isAdmin()) {
-    // Admin viewing any user's resume
+    // Admin user
     $userId = $viewUserId;
 } else {
-    // Regular user - must be logged in and can only view their own resume
+    // Regular user
     $auth->requireLogin();
     $userId = $_SESSION['user_id'];
 }
 
-// Get user's personal info
 $personal = $pdo->prepare("SELECT * FROM personal_info WHERE user_id = ? LIMIT 1");
 $personal->execute([$userId]);
 $personal = $personal->fetch(PDO::FETCH_ASSOC);
 
 if (!$personal) {
-    // No resume found
+    // No resume
     if ($auth->isAdmin() && $viewUserId) {
         echo "<h1>This user hasn't created a resume yet.</h1>";
         echo "<a href='admin.php'>Back to Admin Panel</a>";
