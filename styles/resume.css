@@ -111,16 +111,19 @@
         }
         
         .name {
-            font-size: 28px;
+            font-size: 26px;
             font-weight: 700;
             margin-bottom: 8px;
-            text-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            background: linear-gradient(135deg, #fff 0%, #e2e8f0 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
         }
         
         .title {
             font-size: 16px;
-            opacity: 0.9;
-            font-weight: 300;
+            color: rgba(255, 255, 255, 0.8);
+            font-weight: 400;
         }
         
         .section {
@@ -136,8 +139,9 @@
             display: flex;
             align-items: center;
             gap: 10px;
-            border-bottom: 2px solid rgba(255,255,255,0.3);
+            border-bottom: 2px solid rgba(96, 165, 250, 0.3);
             padding-bottom: 8px;
+            color: #60a5fa;
         }
         
         .section-title i {
@@ -264,27 +268,29 @@
         
         .technical-skills {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
-            gap: 10px;
-            position: center;
-
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 12px;
         }
         
         .tech-skill {
-            color: white;
-            background: #172534;
-            opacity: 0.9;
-            padding: 15px;
+            background: rgba(96, 165, 250, 0.1);
+            border: 1px solid rgba(96, 165, 250, 0.2);
+            color: #93c5fd;
+            padding: 12px;
             border-radius: 8px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
             display: flex;
             align-items: center;
-            gap: 10px;
-            transition: transform 0.2s ease;
+            justify-content: center;
+            font-size: 13px;
+            font-weight: 500;
+            transition: all 0.2s ease;
+            text-align: center;
         }
         
         .tech-skill:hover {
-            transform: scale(1.02);
+            background: rgba(96, 165, 250, 0.15);
+            border-color: rgba(96, 165, 250, 0.4);
+            transform: translateY(-2px);
         }
         
         .tech-skill i {
