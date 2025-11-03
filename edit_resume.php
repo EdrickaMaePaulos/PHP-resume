@@ -288,9 +288,7 @@ $projects = $projects->fetchAll(PDO::FETCH_ASSOC);
     </a>
 
     <div class="edit-container">
-        <div class="header">
-            <h1><i class="fas fa-edit"></i> Edit Your Resume</h1>
-        </div>
+        
 
         <?php if ($message): ?>
             <div class="alert <?php echo $success ? 'success' : 'error'; ?>">
