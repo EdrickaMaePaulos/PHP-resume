@@ -41,7 +41,7 @@ $totalSkills = $pdo->query("SELECT COUNT(*) FROM technical_skills")->fetchColumn
                 <i class="fas fa-shield-alt"></i> Admin Panel
             </div>
             <div class="nav-right">
-                <a href="home.php" class="home-btn">
+                <a href="dashboard.php" class="home-btn">
                     <i class="fas fa-home"></i> Dashboard
                 </a>
                 <a href="?action=logout" class="logout-btn">

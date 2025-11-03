@@ -1,113 +1,104 @@
 <?php
 require_once 'db.php';
-require_once 'auth.php';
 
-$viewUserId = isset($_GET['user_id']) ? (int)$_GET['user_id'] : null;
+// Get resume ID from URL parameter
+$resume_id = isset($_GET['id']) ? intval($_GET['id']) : 0;
 
-if ($viewUserId && $auth->isAdmin()) {
-    // Admin user
-    $userId = $viewUserId;
-} else {
-    // Regular user
-    $auth->requireLogin();
-    $userId = $_SESSION['user_id'];
+if ($resume_id === 0) {
+    die("Resume not found.");
 }
 
-$personal = $pdo->prepare("SELECT * FROM personal_info WHERE user_id = ? LIMIT 1");
-$personal->execute([$userId]);
-$personal = $personal->fetch(PDO::FETCH_ASSOC);
+try {
+    // Fetch personal info by ID (not user_id) - PUBLIC ACCESS
+    $personal = $pdo->prepare("SELECT * FROM personal_info WHERE id = ? LIMIT 1");
+    $personal->execute([$resume_id]);
+    $personal = $personal->fetch(PDO::FETCH_ASSOC);
 
-if (!$personal) {
-    // No resume
-    if ($auth->isAdmin() && $viewUserId) {
-        echo "<h1>This user hasn't created a resume yet.</h1>";
-        echo "<a href='admin.php'>Back to Admin Panel</a>";
-    } else {
-        header('Location: dashboard.php');
+    if (!$personal) {
+        die("Resume not found.");
     }
-    exit();
-}
 
-$personalId = $personal['id'];
+    // Fetch professional skills
+    $personalSkills = $pdo->prepare("SELECT * FROM professional_skills WHERE personal_id = ? ORDER BY percentage DESC");
+    $personalSkills->execute([$resume_id]);
+    $personalSkills = $personalSkills->fetchAll(PDO::FETCH_ASSOC);
 
-$personalSkills = $pdo->prepare("SELECT skill_name, percentage FROM professional_skills WHERE personal_id = ?");
-$personalSkills->execute([$personalId]);
-$personalSkills = $personalSkills->fetchAll(PDO::FETCH_ASSOC);
+    // Fetch technical skills
+    $technicalSkills = $pdo->prepare("SELECT * FROM technical_skills WHERE personal_id = ?");
+    $technicalSkills->execute([$resume_id]);
+    $technicalSkills = $technicalSkills->fetchAll(PDO::FETCH_ASSOC);
 
-$education = $pdo->prepare("SELECT degree, institution, date_range, gwa FROM education WHERE personal_id = ? ORDER BY id DESC");
-$education->execute([$personalId]);
-$education = $education->fetchAll(PDO::FETCH_ASSOC);
+    // Fetch projects
+    $projects = $pdo->prepare("SELECT * FROM projects WHERE personal_id = ? ORDER BY date DESC");
+    $projects->execute([$resume_id]);
+    $projects = $projects->fetchAll(PDO::FETCH_ASSOC);
 
-$technicalSkills = $pdo->prepare("SELECT skill_name FROM technical_skills WHERE personal_id = ?");
-$technicalSkills->execute([$personalId]);
-$technicalSkills = $technicalSkills->fetchAll(PDO::FETCH_ASSOC);
+    // Fetch education
+    $education = $pdo->prepare("SELECT * FROM education WHERE personal_id = ? ORDER BY id DESC");
+    $education->execute([$resume_id]);
+    $education = $education->fetchAll(PDO::FETCH_ASSOC);
 
-$projects = $pdo->prepare("SELECT project_name, description, date FROM projects WHERE personal_id = ? ORDER BY id DESC");
-$projects->execute([$personalId]);
-$projects = $projects->fetchAll(PDO::FETCH_ASSOC);
-
-function generateSkillBar($skill) {
-    return "
-        <div class='skill-item'>
-            <span>{$skill['skill_name']}</span>
-            <div class='skill-bar'>
-                <div class='skill-progress' style='width: {$skill['percentage']}%'></div>
+    function generateSkillBar($skill) {
+        return "
+            <div class='skill-item'>
+                <span>{$skill['skill_name']}</span>
+                <div class='skill-bar'>
+                    <div class='skill-progress' style='width: {$skill['percentage']}%'></div>
+                </div>
             </div>
-        </div>
-    ";
-}
+        ";
+    }
 
-function generateContactItem($icon, $text) {
-    return "
-        <div class='contact-item'>
-            <i class='$icon'></i>
-            <span>$text</span>
-        </div>
-    ";
+    function generateContactItem($icon, $text) {
+        return "
+            <div class='contact-item'>
+                <i class='$icon'></i>
+                <span>$text</span>
+            </div>
+        ";
+    }
+
+} catch (PDOException $e) {
+    die("Error: " . $e->getMessage());
 }
 ?>
+
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title><?php echo htmlspecialchars($personal['full_name']); ?> - Resume</title>
+    <title><?php echo htmlspecialchars($personal['full_name'] ?? 'Resume'); ?> - Resume</title>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Istok+Web:ital,wght@0,400;0,700;1,400;1,700&display=swap" rel="stylesheet">
-    <link rel='stylesheet' href='https://cdn-uicons.flaticon.com/3.0.0/uicons-solid-rounded/css/uicons-solid-rounded.css'>
-    <link rel="stylesheet" href="styles\resume.css">
-    
+    <link href="styles/resume.css" rel="stylesheet">
 </head>
+
 <body>
-    <?php if ($auth->isAdmin() && $viewUserId): ?>
-        <a href="admin.php" class="back-btn" title="Back to Admin Panel">
-            <i class="fas fa-arrow-left"></i>
-        </a>
-    <?php else: ?>
-        <a href="dashboard.php" class="back-btn" title="Back to Dashboard">
+        <a href="landing_page.php" class="back-btn" title="Back to Landing Page">
             <i class="fas fa-home"></i>
         </a>
-    <?php endif; ?>
     
     <div class="resume-container">
         <div class="left-section">
             <div class="profile-section">
-                <?php 
-                    // Get profile picture from database
-                    $profilePath = 'uploads/profiles/' . $personal['profile_pic'];
-                    if (!empty($personal['profile_pic']) && file_exists($profilePath)): 
-                ?>
-                    <img src="<?php echo htmlspecialchars($profilePath); ?>" 
-                        alt="<?php echo htmlspecialchars($personal['full_name']); ?>" 
-                        class="profile-picture"
-                        onerror="this.src='uploads/profiles/profile_no.jpg';">
-                <?php else: ?>
-                    <img src="uploads/profiles/profile_no.jpg" alt="Profile Picture" class="profile-picture">
-                <?php endif; ?>
-                
-                <div class="name"><?php echo htmlspecialchars($personal['full_name']); ?></div>
-                <div class="title"><?php echo htmlspecialchars($personal['role']); ?></div>
-            </div>
+        <?php 
+            // Get profile picture from database
+            $profilePath = 'uploads/profiles/' . $personal['profile_pic'];
+            if (!empty($personal['profile_pic']) && file_exists($profilePath)): 
+        ?>
+            <img src="<?php echo htmlspecialchars($profilePath); ?>" 
+                alt="<?php echo htmlspecialchars($personal['full_name']); ?>" 
+                class="profile-picture"
+                onerror="this.src='uploads/profiles/profile_no.jpg';">
+        <?php else: ?>
+            <img src="uploads/profiles/profile_no.jpg" alt="Profile Picture" class="profile-picture">
+        <?php endif; ?>
+        
+        <div class="name"><?php echo htmlspecialchars($personal['full_name']); ?></div>
+        <div class="title"><?php echo "Full Stack Developer" ?></div>
+    </div>
 
             
             <div class="section">
@@ -183,4 +174,5 @@ function generateContactItem($icon, $text) {
     </div>
     <button class="print-btn" onclick="window.print()" title="Print Resume"><i class="fas fa-print"></i></button>
 </body>
+
 </html>

@@ -68,7 +68,7 @@ class Auth {
 
     public function requireLogin() {
         if (!$this->isLoggedIn()) {
-            header('Location: login.php');
+            header('Location: signin.php');
             exit();
         }
     }
@@ -76,7 +76,7 @@ class Auth {
     public function requireAdmin() {
         $this->requireLogin();
         if (!$this->isAdmin()) {
-            header('Location: home.php');
+            header('Location: dashboard.php');
             exit();
         }
     }

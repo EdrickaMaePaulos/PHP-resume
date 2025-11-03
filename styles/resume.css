@@ -38,6 +38,7 @@
             transform: scale(1.1);
         }
         
+        
         @media print {
             .back-btn {
                 display: none;
@@ -93,7 +94,7 @@
             z-index: 1;
         }
         
-        .profile-image {
+        .profile-picture {
             width: 150px;
             height: 150px;
             border-radius: 50%;
@@ -106,7 +107,7 @@
             transition: transform 0.3s ease;
         }
         
-        .profile-image:hover {
+        .profile-picture:hover {
             transform: scale(1.05);
         }
         
