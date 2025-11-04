@@ -13,7 +13,6 @@ $personal->execute([$userId]);
 $personal = $personal->fetch(PDO::FETCH_ASSOC);
 
 if (!$personal) {
-    // Create initial record if none exists
     $stmt = $pdo->prepare("INSERT INTO personal_info (user_id, full_name, email) VALUES (?, ?, ?)");
     $stmt->execute([$userId, $_SESSION['firstName'] . ' ' . $_SESSION['lastName'], $_SESSION['email']]);
     $personal = ['user_id' => $userId, 'full_name' => '', 'email' => $_SESSION['email']];
@@ -21,15 +20,12 @@ if (!$personal) {
 
 $personalId = $personal['id'] ?? null;
 
-// Handle profile picture deletion
 if (isset($_GET['delete_pic']) && $_GET['delete_pic'] == '1') {
     try {
-        // Delete the file from server
         if (!empty($personal['profile_pic']) && file_exists('uploads/profiles/' . $personal['profile_pic'])) {
             unlink('uploads/profiles/' . $personal['profile_pic']);
         }
         
-        // Update database
         $stmt = $pdo->prepare("UPDATE personal_info SET profile_pic = NULL WHERE user_id = ?");
         $stmt->execute([$userId]);
         
@@ -40,125 +36,109 @@ if (isset($_GET['delete_pic']) && $_GET['delete_pic'] == '1') {
     }
 }
 
-// Handle form submission
+// Form submission
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     try {
         $pdo->beginTransaction();
         
-        // Handle profile picture upload
-$profilePic = $personal['profile_pic'] ?? null;
+        // Profile pic
+        $profilePic = $personal['profile_pic'] ?? null;
 
-if (isset($_FILES['profile_pic']) && $_FILES['profile_pic']['error'] === UPLOAD_ERR_OK) {
-    $allowedTypes = ['image/jpeg', 'image/png', 'image/jpg', 'image/gif'];
-    $tmpPath = $_FILES['profile_pic']['tmp_name'];
-    
-    // Use getimagesize to properly detect file type
-    $imageInfo = @getimagesize($tmpPath);
-    
-    if ($imageInfo && in_array($imageInfo['mime'], $allowedTypes)) {
-        $fileType = $imageInfo['mime'];
-        
-        // Delete old profile picture if exists
-        if (!empty($personal['profile_pic']) && file_exists('uploads/profiles/' . $personal['profile_pic'])) {
-            unlink('uploads/profiles/' . $personal['profile_pic']);
-        }
-        
-        // Create uploads directory if it doesn't exist
-        $uploadDir = 'uploads/profiles/';
-        if (!file_exists($uploadDir)) {
-            mkdir($uploadDir, 0777, true);
-        }
-        
-        // Generate unique filename
-        $extension = pathinfo($_FILES['profile_pic']['name'], PATHINFO_EXTENSION);
-        $profilePic = uniqid('profile_') . '.' . $extension;
-        $targetPath = $uploadDir . $profilePic;
-        
-        try {
-            // Create image resource based on MIME type
-            switch ($fileType) {
-                case 'image/jpeg':
-                case 'image/jpg':
-                    $sourceImage = imagecreatefromjpeg($tmpPath);
-                    break;
-                case 'image/png':
-                    $sourceImage = imagecreatefrompng($tmpPath);
-                    break;
-                case 'image/gif':
-                    $sourceImage = imagecreatefromgif($tmpPath);
-                    break;
-                default:
-                    throw new Exception("Unsupported image type");
-            }
+        if (isset($_FILES['profile_pic']) && $_FILES['profile_pic']['error'] === UPLOAD_ERR_OK) {
+            $allowedTypes = ['image/jpeg', 'image/png', 'image/jpg', 'image/gif'];
+            $tmpPath = $_FILES['profile_pic']['tmp_name'];
             
-            // Check if image creation was successful
-            if (!$sourceImage) {
-                throw new Exception("Failed to create image from file");
-            }
+            $imageInfo = @getimagesize($tmpPath);
             
-            // Get original dimensions
-            list($origWidth, $origHeight) = getimagesize($tmpPath);
-            
-            // Set new dimensions (resize to 300x300)
-            $newWidth = 300;
-            $newHeight = 300;
-            
-            // Create new image with desired dimensions
-            $resizedImage = imagecreatetruecolor($newWidth, $newHeight);
-            
-            if (!$resizedImage) {
-                imagedestroy($sourceImage);
-                throw new Exception("Failed to create resized image");
-            }
-            
-            // Preserve transparency for PNG and GIF
-            if ($fileType == 'image/png' || $fileType == 'image/gif') {
-                imagealphablending($resizedImage, false);
-                imagesavealpha($resizedImage, true);
-            }
-            
-            // Resize the image
-            imagecopyresampled(
-                $resizedImage, $sourceImage,
-                0, 0, 0, 0,
-                $newWidth, $newHeight,
-                $origWidth, $origHeight
-            );
-            
-            // Save the resized image
-            switch ($fileType) {
-                case 'image/jpeg':
-                case 'image/jpg':
-                    imagejpeg($resizedImage, $targetPath, 90);
-                    break;
-                case 'image/png':
-                    imagepng($resizedImage, $targetPath);
-                    break;
-                case 'image/gif':
-                    imagegif($resizedImage, $targetPath);
-                    break;
-            }
-            
-            // Free up memory
-            imagedestroy($sourceImage);
-            imagedestroy($resizedImage);
-            
-        } catch (Exception $e) {
-            // If image processing fails, just store the filename
-            // The image won't be resized but will still be saved
-            if (move_uploaded_file($tmpPath, $targetPath)) {
-                $profilePic = basename($targetPath);
+            if ($imageInfo && in_array($imageInfo['mime'], $allowedTypes)) {
+                $fileType = $imageInfo['mime'];
+                
+                if (!empty($personal['profile_pic']) && file_exists('uploads/profiles/' . $personal['profile_pic'])) {
+                    unlink('uploads/profiles/' . $personal['profile_pic']);
+                }
+                
+                $uploadDir = 'uploads/profiles/';
+                if (!file_exists($uploadDir)) {
+                    mkdir($uploadDir, 0777, true);
+                }
+                
+                $extension = pathinfo($_FILES['profile_pic']['name'], PATHINFO_EXTENSION);
+                $profilePic = uniqid('profile_') . '.' . $extension;
+                $targetPath = $uploadDir . $profilePic;
+                
+                try {
+                    switch ($fileType) {
+                        case 'image/jpeg':
+                        case 'image/jpg':
+                            $sourceImage = imagecreatefromjpeg($tmpPath);
+                            break;
+                        case 'image/png':
+                            $sourceImage = imagecreatefrompng($tmpPath);
+                            break;
+                        case 'image/gif':
+                            $sourceImage = imagecreatefromgif($tmpPath);
+                            break;
+                        default:
+                            throw new Exception("Unsupported image type");
+                    }
+                    
+                    if (!$sourceImage) {
+                        throw new Exception("Failed to create image from file");
+                    }
+                    
+                    list($origWidth, $origHeight) = getimagesize($tmpPath);
+                    
+                    $newWidth = 300;
+                    $newHeight = 300;
+                    
+                    $resizedImage = imagecreatetruecolor($newWidth, $newHeight);
+                    
+                    if (!$resizedImage) {
+                        imagedestroy($sourceImage);
+                        throw new Exception("Failed to create resized image");
+                    }
+                    
+                    if ($fileType == 'image/png' || $fileType == 'image/gif') {
+                        imagealphablending($resizedImage, false);
+                        imagesavealpha($resizedImage, true);
+                    }
+                    
+                    imagecopyresampled(
+                        $resizedImage, $sourceImage,
+                        0, 0, 0, 0,
+                        $newWidth, $newHeight,
+                        $origWidth, $origHeight
+                    );
+                    
+                    switch ($fileType) {
+                        case 'image/jpeg':
+                        case 'image/jpg':
+                            imagejpeg($resizedImage, $targetPath, 90);
+                            break;
+                        case 'image/png':
+                            imagepng($resizedImage, $targetPath);
+                            break;
+                        case 'image/gif':
+                            imagegif($resizedImage, $targetPath);
+                            break;
+                    }
+                    
+                    imagedestroy($sourceImage);
+                    imagedestroy($resizedImage);
+                    
+                } catch (Exception $e) {
+                    if (move_uploaded_file($tmpPath, $targetPath)) {
+                        $profilePic = basename($targetPath);
+                    } else {
+                        $profilePic = $personal['profile_pic'] ?? null;
+                    }
+                }
             } else {
-                $profilePic = $personal['profile_pic'] ?? null;
+                $message = 'Invalid image format. Please upload JPG, PNG, or GIF image.';
             }
         }
-    } else {
-        $message = 'Invalid image format. Please upload JPG, PNG, or GIF image.';
-    }
-}
 
-        
-        // Update personal info (including profile picture)
+        // Update personal info
         $stmt = $pdo->prepare("
             UPDATE personal_info 
             SET full_name = ?, role = ?, email = ?, number = ?, location = ?, linkedin = ?, summary = ?, profile_pic = ?
@@ -236,7 +216,6 @@ if (isset($_FILES['profile_pic']) && $_FILES['profile_pic']['error'] === UPLOAD_
         $success = true;
         $message = 'Resume updated successfully!';
         
-        // Refresh data
         $personal = $pdo->prepare("SELECT * FROM personal_info WHERE user_id = ? LIMIT 1");
         $personal->execute([$userId]);
         $personal = $personal->fetch(PDO::FETCH_ASSOC);
@@ -248,7 +227,6 @@ if (isset($_FILES['profile_pic']) && $_FILES['profile_pic']['error'] === UPLOAD_
     }
 }
 
-// Check for success messages
 if (isset($_GET['pic_deleted'])) {
     $success = true;
     $message = 'Profile picture deleted successfully!';
@@ -280,7 +258,7 @@ $projects = $projects->fetchAll(PDO::FETCH_ASSOC);
     <title>Edit Resume - Resume Builder</title>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Istok+Web:ital,wght@0,400;0,700;1,400;1,700&display=swap" rel="stylesheet">
-    <link href="styles\edit.css" rel="stylesheet">
+    <link href="styles/edit.css" rel="stylesheet">
 </head>
 <body>
     <a href="dashboard.php" class="back-btn">
@@ -288,8 +266,6 @@ $projects = $projects->fetchAll(PDO::FETCH_ASSOC);
     </a>
 
     <div class="edit-container">
-        
-
         <?php if ($message): ?>
             <div class="alert <?php echo $success ? 'success' : 'error'; ?>">
                 <?php echo htmlspecialchars($message); ?>
@@ -297,49 +273,44 @@ $projects = $projects->fetchAll(PDO::FETCH_ASSOC);
         <?php endif; ?>
 
         <form method="POST" enctype="multipart/form-data" class="edit-form">
-            <!-- Personal Information Section -->
             <div class="form-section">
                 <h2><i class="fas fa-user"></i> Personal Information</h2>
 
-                <!-- Profile Picture Upload Section -->
-<div class="form-group full-width">
-    <label>Profile Picture</label>
+                <div class="form-group full-width">
+                    <label>Profile Picture</label>
 
-    <div class="upload-circle" id="uploadCircle">
-        <?php 
-                    // Get profile picture from database
-                    $profilePath = 'uploads/profiles/' . $personal['profile_pic'];
-                    if (!empty($personal['profile_pic']) && file_exists($profilePath)): 
-                ?>
-                    <img src="<?php echo htmlspecialchars($profilePath); ?>" 
-                        alt="<?php echo htmlspecialchars($personal['full_name']); ?>" 
-                        class="profile-picture"
-                        onerror="this.src='uploads/profiles/profile_no.jpg';">
-                <?php else: ?>
-                    <img src="uploads/profiles/profile_no.jpg" alt="Profile Picture" class="profile-picture">
-                <?php endif; ?>
-    
+                    <div class="upload-circle" id="uploadCircle">
+                        <?php 
+                            $profilePath = 'uploads/profiles/' . $personal['profile_pic'];
+                            if (!empty($personal['profile_pic']) && file_exists($profilePath)): 
+                        ?>
+                            <img src="<?php echo htmlspecialchars($profilePath); ?>" 
+                                alt="<?php echo htmlspecialchars($personal['full_name']); ?>" 
+                                class="profile-picture"
+                                id="preview"
+                                onerror="this.src='uploads/profiles/profile_no.jpg';">
+                        <?php else: ?>
+                            <img src="uploads/profiles/profile_no.jpg" alt="Profile Picture" class="profile-picture" id="preview">
+                        <?php endif; ?>
 
-        <button type="button" id="removePhoto" class="remove-photo" title="Remove photo" 
-            <?php echo (!empty($personal['profile_pic']) && file_exists('uploads/profiles/' . $personal['profile_pic'])) ? 'style="display:flex;"' : ''; ?>>
-            &times;
-        </button>
-    </div>
+                        <button type="button" id="removePhoto" class="remove-photo" title="Remove photo" 
+                            <?php echo (!empty($personal['profile_pic']) && file_exists('uploads/profiles/' . $personal['profile_pic'])) ? 'style="display:flex;"' : ''; ?>>
+                            &times;
+                        </button>
+                    </div>
 
-    <input type="file" id="profile_pic" name="profile_pic" accept="image/*" style="display:none;" onchange="previewImage(this)">
-    
-    <!-- NEW: Show message when picture exists -->
-    <?php if (!empty($personal['profile_pic']) && file_exists('uploads/profiles/' . $personal['profile_pic'])): ?>
-        <p style="text-align: center; color: #60a5fa; font-size: 13px; margin-top: 10px;">
-            <i class="fas fa-check-circle"></i> Current picture displayed • Click circle to change
-        </p>
-    <?php else: ?>
-        <p style="text-align: center; color: #93c5fd; font-size: 13px; margin-top: 10px;">
-            <i class="fas fa-info-circle"></i> No profile picture uploaded yet
-        </p>
-    <?php endif; ?>
-</div>
-
+                    <input type="file" id="profile_pic" name="profile_pic" accept="image/*" style="display:none;" onchange="previewImage(this)">
+                    
+                    <?php if (!empty($personal['profile_pic']) && file_exists('uploads/profiles/' . $personal['profile_pic'])): ?>
+                        <p style="text-align: center; color: #60a5fa; font-size: 13px; margin-top: 10px;">
+                            <i class="fas fa-check-circle"></i> Current picture displayed • Click circle to change
+                        </p>
+                    <?php else: ?>
+                        <p style="text-align: center; color: #93c5fd; font-size: 13px; margin-top: 10px;">
+                            <i class="fas fa-info-circle"></i> No profile picture uploaded yet
+                        </p>
+                    <?php endif; ?>
+                </div>
 
                 <div class="form-grid">
                     <div class="form-group full-width">
@@ -379,7 +350,6 @@ $projects = $projects->fetchAll(PDO::FETCH_ASSOC);
                 </div>
             </div>
 
-            <!-- Professional Skills Section -->
             <div class="form-section">
                 <h2><i class="fas fa-cogs"></i> Professional Skills</h2>
                 <div id="professional-skills">
@@ -398,7 +368,6 @@ $projects = $projects->fetchAll(PDO::FETCH_ASSOC);
                 </button>
             </div>
 
-            <!-- Technical Skills Section -->
             <div class="form-section">
                 <h2><i class="fas fa-code"></i> Technical Skills</h2>
                 <div id="technical-skills">
@@ -416,7 +385,6 @@ $projects = $projects->fetchAll(PDO::FETCH_ASSOC);
                 </button>
             </div>
 
-            <!-- Education Section -->
             <div class="form-section">
                 <h2><i class="fas fa-graduation-cap"></i> Education</h2>
                 <div id="education-section">
@@ -437,7 +405,6 @@ $projects = $projects->fetchAll(PDO::FETCH_ASSOC);
                 </button>
             </div>
 
-            <!-- Projects Section -->
             <div class="form-section">
                 <h2><i class="fas fa-project-diagram"></i> Projects</h2>
                 <div id="projects-section">
@@ -467,9 +434,7 @@ $projects = $projects->fetchAll(PDO::FETCH_ASSOC);
     </div>
 
     <script>
-        // Profile picture preview
         const previewImg = document.getElementById('preview');
-        const placeholder = document.getElementById('uploadPlaceholder');
         const removeBtn = document.getElementById('removePhoto');
         const fileInput = document.getElementById('profile_pic');
         const uploadCircle = document.getElementById('uploadCircle');
@@ -489,8 +454,6 @@ $projects = $projects->fetchAll(PDO::FETCH_ASSOC);
                 reader.onload = function(e) {
                     previewImg.src = e.target.result;
                     previewImg.style.display = 'block';
-                    placeholder.style.display = 'none';
-                    removeBtn.classList.add('visible');
                     removeBtn.style.display = 'flex';
                 };
                 reader.readAsDataURL(file);
@@ -501,10 +464,7 @@ $projects = $projects->fetchAll(PDO::FETCH_ASSOC);
 
         function clearPhoto() {
             fileInput.value = '';
-            previewImg.src = '';
-            previewImg.style.display = 'none';
-            placeholder.style.display = 'block';
-            removeBtn.classList.remove('visible');
+            previewImg.src = 'uploads/profiles/profile_no.jpg';
             removeBtn.style.display = 'none';
         }
 
@@ -582,6 +542,32 @@ $projects = $projects->fetchAll(PDO::FETCH_ASSOC);
             `;
             container.appendChild(div);
         }
+
+        let formChanged = false;
+        document.querySelectorAll('.edit-form input, .edit-form textarea, .edit-form select').forEach(function(el) {
+            el.addEventListener('input', function() { formChanged = true; });
+            el.addEventListener('change', function() { formChanged = true; });
+        });
+
+        window.addEventListener('beforeunload', function(e) {
+            if (formChanged) {
+                e.preventDefault();
+                e.returnValue = '';
+            }
+        });
+
+        document.querySelectorAll('.btn-cancel, .back-btn').forEach(function(btn) {
+            btn.addEventListener('click', function(e) {
+                if (formChanged) {
+                    let confirmLeave = confirm('You have unsaved changes. Are you sure you want to leave without saving?');
+                    if (!confirmLeave) e.preventDefault();
+                }
+            });
+        });
+
+        document.querySelector('.edit-form').addEventListener('submit', function() {
+            formChanged = false;
+        });
     </script>
 </body>
 </html>

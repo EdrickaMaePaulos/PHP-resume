@@ -44,10 +44,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <title>Register - Resume Builder</title>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Istok+Web:ital,wght@0,400;0,700;1,400;1,700&display=swap" rel="stylesheet">
-    <link href="styles/signup.css" rel="stylesheet">
+    <link href="styles\signup.css" rel="stylesheet">
     
 </head>
 <body>
+    <a href="landing_page.php" class="back-btn" title="Back to Landing Page">
+            <i class="fas fa-arrow-left"></i>
+        </a>
 
     <div class="register-container">   
         <div class="welcome-text">

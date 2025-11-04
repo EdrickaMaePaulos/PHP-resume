@@ -12,7 +12,7 @@ $hasResume = !empty($personalData);
 
 if (isset($_GET['action']) && $_GET['action'] === 'logout') {
     $auth->logout();
-    header('Location: landing_page.php');
+    header('Location: signin.php');
     exit();
 }
 ?>
@@ -72,6 +72,9 @@ if (isset($_GET['action']) && $_GET['action'] === 'logout') {
                             <a href="edit_resume.php?user_id=<?php echo $userId; ?>" class="btn btn-secondary">
                                 <i class="fas fa-edit"></i> Edit
                             </a>
+                            <a href="create_resume.php" class="btn btn-secondary">
+                                <i class="fas fa-plus"></i> Create Resume
+                            </a>
                         </div>
                     <?php else: ?>
                         <div class="resume-status no-resume">No Resume Yet</div>
@@ -99,7 +102,7 @@ if (isset($_GET['action']) && $_GET['action'] === 'logout') {
                     <?php endif; ?>
                 </div>
             </div>
-                    -->
+                    
             <div class="card">
                 <div class="card-content">
                     <i class="fas fa-chart-line card-icon"></i>
@@ -110,7 +113,7 @@ if (isset($_GET['action']) && $_GET['action'] === 'logout') {
                     </a>
                 </div>
             </div>
-
+-->
             <div class="card">
                 <div class="card-content">
                     <i class="fas fa-users card-icon"></i>

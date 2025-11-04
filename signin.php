@@ -32,9 +32,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Login</title>
-    <link href="styles/signin.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Istok+Web:ital,wght@0,400;0,700;1,400;1,700&display=swap" rel="stylesheet">
+    <link rel='stylesheet' href='https://cdn-uicons.flaticon.com/3.0.0/uicons-solid-rounded/css/uicons-solid-rounded.css'>
+    <link href="styles\signin.css" rel="stylesheet">
 </head>
 <body>
+    <a href="landing_page.php" class="back-btn" title="Back to Landing Page">
+            <i class="fas fa-arrow-left"></i>
+        </a>
     <div class="login-container">   
         <div class="welcome-text">
             <h1>Sign-in Your Account</h1>

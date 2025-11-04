@@ -1,7 +1,6 @@
 <?php
 require_once 'db.php';
 
-// Get resume ID from URL parameter
 $resume_id = isset($_GET['id']) ? intval($_GET['id']) : 0;
 
 if ($resume_id === 0) {
@@ -18,22 +17,18 @@ try {
         die("Resume not found.");
     }
 
-    // Fetch professional skills
     $personalSkills = $pdo->prepare("SELECT * FROM professional_skills WHERE personal_id = ? ORDER BY percentage DESC");
     $personalSkills->execute([$resume_id]);
     $personalSkills = $personalSkills->fetchAll(PDO::FETCH_ASSOC);
 
-    // Fetch technical skills
     $technicalSkills = $pdo->prepare("SELECT * FROM technical_skills WHERE personal_id = ?");
     $technicalSkills->execute([$resume_id]);
     $technicalSkills = $technicalSkills->fetchAll(PDO::FETCH_ASSOC);
 
-    // Fetch projects
     $projects = $pdo->prepare("SELECT * FROM projects WHERE personal_id = ? ORDER BY date DESC");
     $projects->execute([$resume_id]);
     $projects = $projects->fetchAll(PDO::FETCH_ASSOC);
 
-    // Fetch education
     $education = $pdo->prepare("SELECT * FROM education WHERE personal_id = ? ORDER BY id DESC");
     $education->execute([$resume_id]);
     $education = $education->fetchAll(PDO::FETCH_ASSOC);
@@ -84,7 +79,6 @@ try {
         <div class="left-section">
             <div class="profile-section">
         <?php 
-            // Get profile picture from database
             $profilePath = 'uploads/profiles/' . $personal['profile_pic'];
             if (!empty($personal['profile_pic']) && file_exists($profilePath)): 
         ?>
@@ -97,7 +91,7 @@ try {
         <?php endif; ?>
         
         <div class="name"><?php echo htmlspecialchars($personal['full_name']); ?></div>
-        <div class="title"><?php echo "Full Stack Developer" ?></div>
+        <div class="name"><?php echo htmlspecialchars($personal['role']); ?></div>
     </div>
 
             

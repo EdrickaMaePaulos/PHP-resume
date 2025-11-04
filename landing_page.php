@@ -1,30 +1,27 @@
 <?php
-// Include database connection
 require_once 'db.php';
 
 
-// Check if connection is valid
 if (!isset($pdo) || $pdo === null) {
     die("Database connection failed. Please check your db.php file.");
 }
 
 
-// Fetch all resumes from personal_info table
 $search_query = isset($_GET['search']) ? trim($_GET['search']) : '';
 $resumes = [];
 
 
 try {
     if (!empty($search_query)) {
-        // Search by full name, email, or location
+        // Search
         $search_term = "%" . $search_query . "%";
         $sql = "SELECT id, full_name, role,  email,  location, summary, profile_pic FROM personal_info WHERE 
-                full_name ILIKE :search OR email ILIKE :search OR location ILIKE :search LIMIT 12";
+                full_name ILIKE :search OR role ILIKE :search OR email ILIKE :search OR location ILIKE :search LIMIT 12";
         $stmt = $pdo->prepare($sql);
         $stmt->execute([':search' => $search_term]);
         $resumes = $stmt->fetchAll(PDO::FETCH_ASSOC);
     } else {
-        // Fetch all resumes
+        // all resumes
         $sql = "SELECT id, full_name, role,  email, location, summary, profile_pic FROM personal_info LIMIT 12";
         $stmt = $pdo->prepare($sql);
         $stmt->execute();
@@ -80,7 +77,7 @@ try {
                     value="<?php echo htmlspecialchars($search_query); ?>"
                     id="searchInput"
                 >
-                <button type="submit" class="search-btn">
+                <button type="submit" class="nav-btn search">
                     <i class="fas fa-search"></i>
                     Search
                 </button>
@@ -93,10 +90,8 @@ try {
                 <?php foreach ($resumes as $index => $resume): ?>
                     <a href="public_resume.php?id=<?php echo urlencode($resume['id']); ?>" style="text-decoration: none;">
                         <div class="resume-card" style="animation-delay: <?php echo ($index * 0.05); ?>s;">
-                            <!-- Profile Photo -->
                             <div class="profile-photo">
                                 <?php 
-                                    // Simple: Show profile_pic if exists, else show profile_no.jpg
                                     if (!empty($resume['profile_pic'])) {
                                         $imagePath = 'uploads/profiles/' . $resume['profile_pic'];
                                     } else {
@@ -110,7 +105,6 @@ try {
                             </div>
 
 
-                            <!-- Name -->
                             <div class="resume-name">
                                 <?php 
                                 $name = htmlspecialchars($resume['full_name']);
@@ -119,7 +113,6 @@ try {
                             </div>
 
 
-                            <!-- Field (using location as field for now) -->
                             <div class="resume-field">
                                 <?php 
                                 $location = htmlspecialchars($resume['location'] ?? 'Not specified');
@@ -133,13 +126,11 @@ try {
                                 ?>
                             </div>
 
-                            <!-- Email -->
                             <div class="resume-email">
                                 <?php echo htmlspecialchars($resume['email']); ?>
                             </div>
 
 
-                            <!-- View Resume Button -->
                             <button class="view-resume-btn">
                                 View Resume
                             </button>
