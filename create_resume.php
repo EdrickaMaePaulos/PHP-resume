@@ -6,35 +6,28 @@ $auth->requireLogin();
 $message = '';
 $userId = $_SESSION['user_id'];
 
-// REMOVED: Check that prevented multiple resumes
-// Now users can create multiple resumes
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     try {
         $pdo->beginTransaction();
         
-        // Handle profile picture upload
         $profilePic = null;
         if (isset($_FILES['profile_pic']) && $_FILES['profile_pic']['error'] === UPLOAD_ERR_OK) {
             $allowedTypes = ['image/jpeg', 'image/png', 'image/jpg', 'image/gif'];
             $fileType = $_FILES['profile_pic']['type'];
             
             if (in_array($fileType, $allowedTypes)) {
-                // Create uploads directory if it doesn't exist
                 $uploadDir = 'uploads/profiles/';
                 if (!file_exists($uploadDir)) {
                     mkdir($uploadDir, 0777, true);
                 }
                 
-                // Generate unique filename
                 $extension = pathinfo($_FILES['profile_pic']['name'], PATHINFO_EXTENSION);
                 $profilePic = uniqid('profile_') . '.' . $extension;
                 $targetPath = $uploadDir . $profilePic;
                 
-                // Resize and save the image
                 $tmpPath = $_FILES['profile_pic']['tmp_name'];
                 
-                // Determine image type and create image resource
                 switch ($fileType) {
                     case 'image/jpeg':
                     case 'image/jpg':
@@ -50,23 +43,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         $sourceImage = imagecreatefromjpeg($tmpPath);
                 }
                 
-                // Get original dimensions
                 list($origWidth, $origHeight) = getimagesize($tmpPath);
                 
-                // Set new dimensions (resize to 300x300)
                 $newWidth = 300;
                 $newHeight = 300;
                 
-                // Create new image with desired dimensions
                 $resizedImage = imagecreatetruecolor($newWidth, $newHeight);
                 
-                // Preserve transparency for PNG
                 if ($fileType == 'image/png') {
                     imagealphablending($resizedImage, false);
                     imagesavealpha($resizedImage, true);
                 }
                 
-                // Resize the image
                 imagecopyresampled(
                     $resizedImage, $sourceImage,
                     0, 0, 0, 0,
@@ -74,7 +62,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $origWidth, $origHeight
                 );
                 
-                // Save the resized image
                 switch ($fileType) {
                     case 'image/jpeg':
                     case 'image/jpg':
@@ -88,13 +75,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         break;
                 }
                 
-                // Free up memory
                 imagedestroy($sourceImage);
                 imagedestroy($resizedImage);
             }
         }
         
-        // Insert personal info (including profile picture)
         $stmt = $pdo->prepare("
             INSERT INTO personal_info (user_id, full_name, role, location, email, number, linkedin, summary, profile_pic) 
             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
@@ -113,7 +98,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         
         $personalId = $pdo->lastInsertId();
         
-        // Insert professional skills
         if (!empty($_POST['professional_skills'])) {
             $profSkillStmt = $pdo->prepare("INSERT INTO professional_skills (personal_id, skill_name, percentage) VALUES (?, ?, ?)");
             foreach ($_POST['professional_skills'] as $index => $skill) {
@@ -124,7 +108,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
         }
         
-        // Insert technical skills
         if (!empty($_POST['technical_skills'])) {
             $techSkillStmt = $pdo->prepare("INSERT INTO technical_skills (personal_id, skill_name) VALUES (?, ?)");
             foreach ($_POST['technical_skills'] as $skill) {
@@ -134,7 +117,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
         }
         
-        // Insert education
         if (!empty($_POST['degree'])) {
             $eduStmt = $pdo->prepare("INSERT INTO education (personal_id, degree, institution, date_range, gwa) VALUES (?, ?, ?, ?, ?)");
             foreach ($_POST['degree'] as $index => $degree) {
@@ -150,7 +132,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
         }
         
-        // Insert projects
         if (!empty($_POST['project_name'])) {
             $projStmt = $pdo->prepare("INSERT INTO projects (personal_id, project_name, description, date) VALUES (?, ?, ?, ?)");
             foreach ($_POST['project_name'] as $index => $projectName) {
@@ -198,11 +179,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         <?php endif; ?>
 
         <form method="POST" enctype="multipart/form-data" class="edit-form">
-            <!-- Personal Information Section -->
             <div class="form-section">
                 <h2><i class="fas fa-user"></i> Personal Information</h2>
 
-                <!-- Profile Picture Upload Section - FIXED -->
                 <div class="form-group full-width">
                     <label>Profile Picture</label>
 
@@ -259,7 +238,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 </div>
             </div>
 
-            <!-- Professional Skills Section -->
             <div class="form-section">
                 <h2><i class="fas fa-cogs"></i> Professional Skills</h2>
                 <div id="professional-skills">
@@ -276,7 +254,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 </button>
             </div>
 
-            <!-- Technical Skills Section -->
             <div class="form-section">
                 <h2><i class="fas fa-code"></i> Technical Skills</h2>
                 <div id="technical-skills">
@@ -292,7 +269,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 </button>
             </div>
 
-            <!-- Education Section -->
             <div class="form-section">
                 <h2><i class="fas fa-graduation-cap"></i> Education</h2>
                 <div id="education-section">
@@ -311,7 +287,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 </button>
             </div>
 
-            <!-- Projects Section -->
             <div class="form-section">
                 <h2><i class="fas fa-project-diagram"></i> Projects</h2>
                 <div id="projects-section">
@@ -339,7 +314,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     </div>
 
     <script>
-        // Profile picture preview
         const previewImg = document.getElementById('preview');
         const placeholder = document.getElementById('uploadPlaceholder');
         const removeBtn = document.getElementById('removePhoto');
@@ -350,7 +324,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             if (input.files && input.files[0]) {
                 const file = input.files[0];
 
-                // Client-side validation
                 const allowed = ['image/jpeg','image/png','image/jpg','image/gif'];
                 if (!allowed.includes(file.type)) {
                     alert('Only JPG, PNG or GIF images are allowed.');
@@ -379,22 +352,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             removeBtn.classList.remove('visible');
         }
 
-        // Remove photo button - prevents opening file dialog
         removeBtn.addEventListener('click', function(e) {
             e.stopPropagation();
             e.preventDefault();
             clearPhoto();
         });
 
-        // Click on circle to upload/change photo
         uploadCircle.addEventListener('click', function(e) {
-            // Only trigger if not clicking the remove button
             if (!e.target.closest('#removePhoto')) {
                 fileInput.click();
             }
         });
 
-        // Also allow changing photo by clicking on the image itself
         previewImg.addEventListener('click', function(e) {
             e.stopPropagation();
             fileInput.click();

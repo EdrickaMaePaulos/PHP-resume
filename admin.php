@@ -3,7 +3,6 @@ require_once 'auth.php';
 
 $auth->requireAdmin();
 
-// Get all users with resumes
 $stmt = $pdo->query("
     SELECT 
         u.userid, u.username, u.email, u.firstName, u.lastName, u.created_at,
@@ -17,7 +16,6 @@ $stmt = $pdo->query("
 ");
 $users = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-// Statistics
 $totalUsers = $pdo->query("SELECT COUNT(*) FROM users WHERE isAdmin = FALSE")->fetchColumn();
 $totalResumes = $pdo->query("SELECT COUNT(*) FROM personal_info")->fetchColumn();
 $totalProjects = $pdo->query("SELECT COUNT(*) FROM projects")->fetchColumn();
